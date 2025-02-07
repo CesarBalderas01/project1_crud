@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Lista de Usuarios</h1>
+            </div>
+            <div class="col align-self-end">
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    Crear Nuevo Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <!-- CREATE USER MODAL -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createUserModalLabel">Crear Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <form method="post" action="{% url 'create_user' %}" id="formCrearUsuario">
+                        {% csrf_token %}
+                        <div class="container">
+                              <div class="row">
+                                {% for field in form %}
+                                    <div class="col-8">
+
+                                        <label class="form-label">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            {% for error in field.errors %}
+                                                <div class="alert alert-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                              </div>  
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+ <!-- EDIT USER MODAL -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" id="editUserForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="id" id="editUserId">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" name="user_name" id="editUserName" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="user_email" id="editUserEmail" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" name="user_phone" id="editUserPhone" class="form-control">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                        </div>  
+                    </form> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-hover table-striped table-bordered shadow-sm">
+
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{user.user_name}}</td>
+                    <td>{{ user.user_email }}</td>
+                    <td>{{ user.user_phone }}</td>
+                    <td>
+                        <button type="button" class="btn btn-warning btn-sm edit-user-btn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editUserModal"
+                            data-id="{{ user.id }}"
+                            data-name="{{ user.user_name }}"
+                            data-email="{{ user.user_email }}"
+                            data-phone="{{ user.user_phone }}">
+                            Editar
+                        </button>
+                        <a href="{% url 'delete_user' user.id %}" class="btn btn-danger btn-sm" 
+                           onclick="return confirm('¿Estás seguro de eliminar este user?')">Eliminar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Capturamos todos los botones de editar
+            document.querySelectorAll(".edit-user-btn").forEach(button => {
+                button.addEventListener("click", function() {
+                    // Obtener valores del botón
+                    const userId = this.getAttribute("data-id");
+                    const userName = this.getAttribute("data-name");
+                    const userEmail = this.getAttribute("data-email");
+                    const userPhone = this.getAttribute("data-phone");
+
+                    console.log(userId);
+
+                    // Llenar los campos en el modal
+                    document.getElementById("editUserId").value = userId;
+                    document.getElementById("editUserName").value = userName;
+                    document.getElementById("editUserEmail").value = userEmail;
+                    document.getElementById("editUserPhone").value = userPhone;
+
+                    // Establecer la acción del formulario correctamente
+                    document.getElementById("editUserForm").action = `/edit/${userId}/`;
+                });
+            });
+
+            // Ocultar modales después de éxito
+            const successMessage = document.querySelector('.alert-success');
+            if (successMessage) {
+                const modalCreate = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+                if (modalCreate) modalCreate.hide();
+
+                const modalEdit = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                if (modalEdit) modalEdit.hide();
+            }
+
+            {% for message in messages %}
+                Swal.fire({
+                    icon: '{% if message.tags == "success" %}success{% else %}error{% endif %}',
+                    title: "{{ message }}",
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            {% endfor %}
+
+        });
+    </script>
+    
+{% endblock %}

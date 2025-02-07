@@ -1,0 +1,9 @@
+# Ocultar configuraciones sensibles y archivos innecesarios
+*.pyc
+__pycache__/
+db.sqlite3
+.env
+*.log
+/static/
+media/
+venv/
