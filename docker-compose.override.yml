@@ -1,0 +1,7 @@
+services:
+  web:
+    environment:
+      - ENVIRONMENT=development
+      - DJANGO_DEBUG=True
+    volumes:
+      - .:/app

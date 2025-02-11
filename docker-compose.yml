@@ -1,0 +1,46 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    env_file: .env
+    environment:
+      MYSQL_DATABASE: djangodb
+      MYSQL_USER: djangouser
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - backend
+
+  web:
+    build: .
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - DB_NAME=djangodb
+      - DB_USER=djangouser
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DJANGO_SECRET_KEY =${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS = 172.16.140.130, 127.0.0.1
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--reload", "project1_crud.wsgi:application"]
+    networks:
+      - backend
+    volumes:
+      - .:/app
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
